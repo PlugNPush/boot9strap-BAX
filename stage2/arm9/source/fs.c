@@ -87,3 +87,11 @@ bool fileDelete(const char* path)
 {
     return (f_unlink(path) == FR_OK);
 }
+
+bool fileExists(const char* path)
+{
+    FIL file;
+    if(f_open(&file, path, FA_READ) != FR_OK) return false;   
+    f_close(&file);
+    return true;
+}
