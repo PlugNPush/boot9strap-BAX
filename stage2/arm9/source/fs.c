@@ -83,11 +83,6 @@ bool fileWrite(const void *buffer, const char *path, u32 size)
     }
 }
 
-bool fileDelete(const char* path)
-{
-    return (f_unlink(path) == FR_OK);
-}
-
 bool fileExists(const char* path)
 {
     FIL file;
