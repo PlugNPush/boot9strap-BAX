@@ -40,7 +40,6 @@ static FirmLoadStatus loadFirm(Firm **outFirm)
     static const char* firmNames[] = {"bax.firm", "boot.firm"};
     const int firmcount=2;
     bool bootonce=false;
-    bool found=false;
 
     if (fileExists(bootonceFirm)) 
     {
@@ -54,7 +53,6 @@ static FirmLoadStatus loadFirm(Firm **outFirm)
             if (fileExists(firmNames[fcount]))
             {
                 firmName = firmNames[fcount];
-                found=true;
                 break;
             }
         }
@@ -99,9 +97,11 @@ static FirmLoadStatus loadFirm(Firm **outFirm)
     if(!calculatedFirmSize || fileRead(firm, firmName, 0, maxFirmSize) < calculatedFirmSize || !checkSectionHashes(firm))
         return FIRM_LOAD_CORRUPT;
     else
+    {
         if(bootonce)
             fileDelete(firmName);
         return FIRM_LOAD_OK;
+    }
 }
 
 static void bootFirm(Firm *firm, bool isNand)
