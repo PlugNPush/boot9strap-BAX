@@ -36,26 +36,30 @@ static void invokeArm11Function(Arm11Operation op)
 static FirmLoadStatus loadFirm(Firm **outFirm, const char*)
 {
     const char *firmName;
-
-    static const char* bootonce = "bootonce.firm";
-    if (fileExists(bootonce)) 
-    {
-        firmName = bootonce
-    }
-    bool found=false;
+    static const char* bootonceFirm = "bootonce.firm";
     static const char* firmNames[] = {"bax.firm", "boot.firm"};
     const int firmcount=2;
-    for (uint8_t fcount=0;fcount<firmcount;fcount++)
-    {
-        if (fileExists(firmNames[fcount]))
-        {
-            firmName = firmNames[fcount];
-            found = true;
-            break;
-        }
-    }
+    bool found=false;
+    bool bootonce=false;
 
-    if (found == false) firmName = "boot.firm";
+    if (fileExists(bootonceFirm)) 
+    {
+        firmName = bootonceFirm;
+        bootonce = true;
+    }
+    else 
+    {
+        for (uint8_t fcount=0;fcount<firmcount;fcount++)
+        {
+            if (fileExists(firmNames[fcount]))
+            {
+                firmName = firmNames[fcount];
+                found = true;
+                break;
+            }
+        }
+        if (found == false) firmName = "boot.firm";
+    }
     
     Firm *firmHeader = (Firm *)0x080A0000;
     u32 rd = fileRead(firmHeader, firmName, 0x200, 0);
@@ -92,8 +96,7 @@ static FirmLoadStatus loadFirm(Firm **outFirm, const char*)
     if(!calculatedFirmSize || fileRead(firm, firmName, 0, maxFirmSize) < calculatedFirmSize || !checkSectionHashes(firm))
         return FIRM_LOAD_CORRUPT;
     else
-        if(firmName == bootonce)
-            fileDelete(bootonce);
+        if(bootonce) fileDelete(firmName);
         return FIRM_LOAD_OK;
 }
 
