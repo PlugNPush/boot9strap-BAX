@@ -33,18 +33,17 @@ static void invokeArm11Function(Arm11Operation op)
     while(*operation != ARM11_READY); 
 }
 
-static FirmLoadStatus loadFirm(Firm **outFirm, const char*)
+static FirmLoadStatus loadFirm(Firm **outFirm)
 {
-    const char *firmName;
+    char *chosenFirmName = "boot.firm";
     static const char* bootonceFirm = "bootonce.firm";
     static const char* firmNames[] = {"bax.firm", "boot.firm"};
     const int firmcount=2;
-    bool found=false;
     bool bootonce=false;
 
     if (fileExists(bootonceFirm)) 
     {
-        firmName = bootonceFirm;
+        chosenFirmName = bootonceFirm;
         bootonce = true;
     }
     else 
@@ -53,13 +52,13 @@ static FirmLoadStatus loadFirm(Firm **outFirm, const char*)
         {
             if (fileExists(firmNames[fcount]))
             {
-                firmName = firmNames[fcount];
-                found = true;
+                chosenFirmName = firmNames[fcount];
                 break;
             }
         }
-        if (found == false) firmName = "boot.firm";
     }
+
+    const char *firmName = chosenFirmName;
     
     Firm *firmHeader = (Firm *)0x080A0000;
     u32 rd = fileRead(firmHeader, firmName, 0x200, 0);
