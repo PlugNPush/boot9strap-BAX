@@ -35,15 +35,16 @@ static void invokeArm11Function(Arm11Operation op)
 
 static FirmLoadStatus loadFirm(Firm **outFirm)
 {
-    char *chosenFirmName = "boot.firm";
+    const char *firmName = NULL;
     static const char* bootonceFirm = "bootonce.firm";
     static const char* firmNames[] = {"bax.firm", "boot.firm"};
     const int firmcount=2;
     bool bootonce=false;
+    bool found=false;
 
     if (fileExists(bootonceFirm)) 
     {
-        chosenFirmName = bootonceFirm;
+        firmName = bootonceFirm;
         bootonce = true;
     }
     else 
@@ -52,13 +53,16 @@ static FirmLoadStatus loadFirm(Firm **outFirm)
         {
             if (fileExists(firmNames[fcount]))
             {
-                chosenFirmName = firmNames[fcount];
+                firmName = firmNames[fcount];
+                found=true;
                 break;
             }
         }
     }
 
-    const char *firmName = chosenFirmName;
+    if (!firmName)
+        firmName = "boot.firm"; 
+    
     
     Firm *firmHeader = (Firm *)0x080A0000;
     u32 rd = fileRead(firmHeader, firmName, 0x200, 0);
@@ -95,7 +99,8 @@ static FirmLoadStatus loadFirm(Firm **outFirm)
     if(!calculatedFirmSize || fileRead(firm, firmName, 0, maxFirmSize) < calculatedFirmSize || !checkSectionHashes(firm))
         return FIRM_LOAD_CORRUPT;
     else
-        if(bootonce) fileDelete(firmName);
+        if(bootonce)
+            fileDelete(firmName);
         return FIRM_LOAD_OK;
 }
 
