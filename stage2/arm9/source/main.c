@@ -33,38 +33,8 @@ static void invokeArm11Function(Arm11Operation op)
     while(*operation != ARM11_READY); 
 }
 
-const char *getFirmNameFromBootOrder(void) 
+static FirmLoadStatus trialLoadFirm(Firm **outFirm, char* firmName) 
 {
-    const char* bootOrder = NULL;
-    if (fileExists("boot_order.txt"))
-        bootOrder = "boot_order.txt";
-    else if (fileExists("bootorder.txt"))
-        bootOrder = "bootorder.txt";
-    
-    if (bootOrder)
-    {
-        static char line[2048];
-        u32 lineNumber = 0;
-        u32 bytesRead;
-
-        while ((bytesRead = fileReadLine(line, bootOrder, lineNumber, sizeof(line))) > 0)
-        {
-            line[bytesRead] = '\0';
-
-            if (fileExists(line))
-                return line;
-
-            lineNumber++;
-        }
-    }
-
-    return "boot.firm";
-}
-
-static FirmLoadStatus loadFirm(Firm **outFirm)
-{
-    const char *firmName = getFirmNameFromBootOrder();
-
     Firm *firmHeader = (Firm *)0x080A0000;
     u32 rd = fileRead(firmHeader, firmName, 0x200, 0);
     if (rd != 0x200)
@@ -101,6 +71,44 @@ static FirmLoadStatus loadFirm(Firm **outFirm)
         return FIRM_LOAD_CORRUPT;
     else
         return FIRM_LOAD_OK;
+}
+
+static FirmLoadStatus loadFirmFromBootOrder(Firm **outFirm) 
+{
+    const char* bootOrder = NULL;
+    if (fileExists("boot_order.txt"))
+        bootOrder = "boot_order.txt";
+    else if (fileExists("boot-order.txt"))
+        bootOrder = "boot-order.txt";
+    else if (fileExists("bootorder.txt"))
+        bootOrder = "bootorder.txt";
+    
+    if (bootOrder)
+    {
+        static char line[2048];
+        u32 lineNumber = 0;
+        u32 bytesRead;
+
+        while ((bytesRead = fileReadLine(line, bootOrder, lineNumber, sizeof(line))) > 0)
+        {
+            line[bytesRead] = '\0';
+            if (fileExists(line))
+            {
+                FirmLoadStatus status = trialLoadFirm(outFirm, line);
+                if (status == FIRM_LOAD_OK)
+                    return status;
+            }
+
+            lineNumber++;
+        }
+    }
+
+    return trialLoadFirm(outFirm, "boot.firm");
+}
+
+static FirmLoadStatus loadFirm(Firm **outFirm)
+{
+    return loadFirmFromBootOrder(outFirm);
 }
 
 static void bootFirm(Firm *firm, bool isNand)
